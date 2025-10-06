@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <title>Vineyard Drone Simulation</title>
+  </head>
+
+  <body style="margin:0; overflow:hidden;">
+    <script>
+      const data = {{DATA}};  // placeholder for Streamlit to inject JSON
+
+      function setup() {
+        createCanvas(800, 500);
+        background(230, 255, 230);
+      }
+
+      function draw() {
+        background(230, 255, 230);
+
+        // collection points
+        fill('green');
+        data.collection_points.forEach(cp => {
+          rect(cp.x * 40, height - cp.y * 40, 15, 15);
+        });
+
+        // workers
+        fill('red');
+        data.workers.forEach(w => {
+          ellipse(w.x * 40, height - w.y * 40, 15, 15);
+        });
+
+        // drones
+        fill('blue');
+        data.drones.forEach(d => {
+          ellipse(d.x * 40, height - d.y * 40, 20, 20);
+        });
+      }
+    </script>
+  </body>
+</html>

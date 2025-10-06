@@ -1,5 +1,6 @@
 import simpy
 import math
+import time
 class Box:
     def __init__(self, worker_id, created_time):
         self.worker_id = worker_id
@@ -102,15 +103,38 @@ class Drone:
 
 
 def run_sim(num_workers=5, num_drones=2, sim_time=60, fatigue_threshold=3):
-    events = []
     env = simpy.Environment()
     box_queue = simpy.Store(env)
     collection_point = CollectionPoint(Location(10, 5))
-    workers = [Worker(env, i, box_queue, collection_point, fatigue_threshold) for i in range(1, num_workers+1)]
-    drones = [Drone(env, j, box_queue, collection_point) for j in range(1, num_drones+1)]
+
+    workers = [
+        Worker(env, i, box_queue, collection_point, fatigue_threshold, location=Location(i*2, 0))
+        for i in range(1, num_workers+1)
+    ]
+    drones = [
+        Drone(env, j, box_queue, collection_point, location=Location(0, j*2))
+        for j in range(1, num_drones+1)
+    ]
 
     env.run(until=sim_time)
 
-    # Collect results
-    delivered = [w for w in workers]  # keep worker state
-    return workers, drones, box_queue
+    return workers, drones, collection_point, box_queue
+
+
+def run_sim_stepwise(num_workers=5, num_drones=2, sim_time=60, fatigue_threshold=3):
+    env = simpy.Environment()
+    box_queue = simpy.Store(env)
+    collection_point = CollectionPoint(Location(10, 5))
+
+    workers = [
+        Worker(env, i, box_queue, collection_point, fatigue_threshold, location=Location(i * 2, 0))
+        for i in range(1, num_workers + 1)
+    ]
+    drones = [
+        Drone(env, j, box_queue, collection_point, location=Location(0, j * 2))
+        for j in range(1, num_drones + 1)
+    ]
+
+    while env.now < sim_time:
+        env.step()
+        yield env.now, workers, drones, collection_point
