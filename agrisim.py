@@ -22,6 +22,10 @@ class Location:
 
     def distance_to(self, other):
         return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
+    def move_towards(self, target, fraction):
+        """Move this location a fraction (0–1) towards target."""
+        self.x += (target.x - self.x) * fraction
+        self.y += (target.y - self.y) * fraction
 
 class CollectionPoint:
     def __init__(self, location):
@@ -42,6 +46,7 @@ class Worker:
         self.fatigue = 0
         self.fatigue_threshold = fatigue_threshold
         self.location = location
+        self.base = Location(location.x, location.y)  # starting point
         env.process(self.run())
 
     def harvest_time(self):
@@ -64,7 +69,18 @@ class Worker:
 
             if self.fatigue < self.fatigue_threshold:
                 # Optionally, worker can deliver the box themselves
-                yield self.env.timeout(self.transport_time())
+                travel_time = self.transport_time()
+                steps = int(travel_time) or 1
+                for _ in range(steps):
+                    yield self.env.timeout(travel_time / steps)
+                    self.location.move_towards(self.collection_point.location, 1 / steps)
+                distance_back = self.location.distance_to(self.base)
+                travel_time_back = self.transport_time()
+                steps_back = int(travel_time_back) or 1
+                for _ in range(steps_back):
+                    yield self.env.timeout(travel_time_back / steps_back)
+                    self.location.move_towards(self.base, 1 / steps_back)
+
                 box.mark_delivered(self.env.now, f"W{self.id}")
                 print(f"Time {self.env.now:.2f}: Worker {self.id} | {box} Delivered")
             else:
