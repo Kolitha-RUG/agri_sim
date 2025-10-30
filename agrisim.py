@@ -134,6 +134,8 @@ def run_sim(num_workers=5, num_drones=2, sim_time=60, fatigue_threshold=3):
 
     env.run(until=sim_time)
 
+    
+
     return workers, drones, collection_point, box_queue
 
 
